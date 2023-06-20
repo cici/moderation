@@ -7,6 +7,7 @@ import (
 
 	"crypto/tls"
 	"crypto/x509"
+	"moderation"
 
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/client"
@@ -74,19 +75,12 @@ func main() {
 		TaskQueue: "trivia-moderation",
 	}
 
-	// Set input
-	input := resources.WorkflowInput{
-		Category:          "General",
-		NumberOfQuestions: 5,
-		NumberOfPlayers:   1,
-		AnswerTimeLimit:   30,
-		ResultTimeLimit:   5,
-	}
+	name := "bitch"
 
-	we, err := c.ExecuteWorkflow(context.Background(), workflowOptions, triviagame.TriviaGameWorkflow, input)
+	we, err := c.ExecuteWorkflow(context.Background(), workflowOptions, moderation.ModerationWorkflow, name)
 	if err != nil {
 		log.Fatalln("Unable to execute workflow", err)
 	}
 
-	log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID())
+	log.Println("Started workflow", "WorkflowID", we.GetID(), "RunID", we.GetRunID(), "Name:", name)
 }

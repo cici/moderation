@@ -1,6 +1,9 @@
 package moderation
 
 import (
+	"fmt"
+	"log"
+	"moderation/resources"
 	"os"
 	"time"
 
@@ -8,14 +11,7 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-type (
-	ModerationInput struct {
-		Key  string `json:"key"`
-		Name string `json:"name"`
-	}
-)
-
-func Workflow(ctx workflow.Context, name string) (string, error) {
+func ModerationWorkflow(ctx workflow.Context, name string) (string, error) {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,
 		RetryPolicy: &temporal.RetryPolicy{
@@ -27,24 +23,26 @@ func Workflow(ctx workflow.Context, name string) (string, error) {
 	}
 	ctx = workflow.WithActivityOptions(ctx, ao)
 
-	logger := workflow.GetLogger(ctx)
-	logger.Info("Moderation Started")
+	//logger := workflow.GetLogger(ctx)
+	log.Println("Moderation Started")
 
-	logger.Error("CHAT KEY: " + os.Getenv("CHATGPT_API_KEY"))
+	log.Println("CHAT KEY: " + os.Getenv("CHATGPT_API_KEY"))
+	log.Println("MODERATION URL: " + os.Getenv("MODERATION_URL"))
 
 	// set activity inputs for moderating name
-	activityInput := ModerationInput{
-		Key:  os.Getenv("CHATGPT_API_KEY"),
-		Name: workflowInput.name,
+	activityInput := resources.ModerationInput{
+		Url:  os.Getenv("MODERATION_URL"),
+		Name: name,
 	}
 
 	// run activity to check provided name
-	var result string
-	err = workflow.ExecuteActivity(ctx, activities.ModerationActivity, activityInput).Get(ctx, &result)
+	var moderationResult bool
+	err := workflow.ExecuteActivity(ctx, ModerationActivity, activityInput).Get(ctx, &moderationResult)
 	if err != nil {
-		logger.Error("Activity failed.", "Error", err)
-		return err
+		log.Fatalln("Activity failed.", "Error", err)
+		return "", err
 	}
-
-	return nil
+	output := fmt.Sprintf("Moderation complete (for name: %s, result: %t)", name, moderationResult)
+	log.Println(output)
+	return output, nil
 }

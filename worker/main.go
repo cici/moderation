@@ -2,13 +2,14 @@ package main
 
 import (
 	"log"
+	"moderation"
 
 	"crypto/tls"
 	"crypto/x509"
 	"os"
 
-	workflow "github.com/ktenzer/temporal-trivia"
-	activities "github.com/ktenzer/temporal-trivia/activities"
+	workflow "moderation"
+
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -70,11 +71,11 @@ func main() {
 	}
 	defer c.Close()
 
-	w := worker.New(c, "trivia-game", worker.Options{})
+	w := worker.New(c, "trivia-moderation", worker.Options{})
 
-	w.RegisterWorkflow(workflow.TriviaGameWorkflow)
-	w.RegisterActivity(activities.TriviaQuestionActivity)
-	w.RegisterActivity(activities.LeaderBoardActivity)
+	log.Println("Moderation Worker start")
+	w.RegisterWorkflow(workflow.ModerationWorkflow)
+	w.RegisterActivity(moderation.ModerationActivity)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
